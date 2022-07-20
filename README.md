@@ -7,4 +7,5 @@ Appointment booking service<br/>
 ⭐ CRUD on user and appointment information <br/>
 ⭐ Development is in progress.... <br/>
 
+# Try by hitting this url : https://clinic-api-v2.herokuapp.com/form/1
 
