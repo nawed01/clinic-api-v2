@@ -1,5 +1,6 @@
+import re
 import pymysql
-import json
+from mysql.connector import Error
 from sqlalchemy import true
 from app import app
 from config import mysql
@@ -31,8 +32,9 @@ def signUp_user():
             respone = jsonify(getDictonary(get_user(_phone_number),200))
             return respone
        
-    except Exception as e:
+    except pymysql.Error as e:
         print(e)
+        return showMessage()
     finally:
         cursor.close() 
         conn.close()
@@ -44,8 +46,9 @@ def get_user(phone_number):
         cursor.execute("SELECT id, phone_number, created_at FROM user WHERE phone_number=%s",phone_number)
         user = cursor.fetchone()
         return user
-    except Exception as e:
+    except pymysql.Error as e:
         print(e)
+        return showMessage()
     finally:
         cursor.close() 
         conn.close()  
@@ -59,11 +62,35 @@ def get_user_profile(user_id):
         user = cursor.fetchone()
         respone = jsonify(getDictonary(user,200))
         return respone
-    except Exception as e:
+    except pymysql.Error as e:
         print(e)
+        return showMessage()
     finally:
         cursor.close() 
         conn.close() 
+
+@app.route('/profile', methods = ['POST'])
+def create_user_profile():
+    try:
+        _json = request.json
+        _address = _json['address']
+        _name = _json['name']
+        _userID = _json['userID']
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
+        cursor.execute("INSERT INTO profile(userID, name, address) VALUES(%s, %s,%s)",(_userID, _name, _address))
+        
+        conn.commit()
+        respone = get_user_profile(_userID)
+        return respone
+    except pymysql.Error as e:
+        print(e)
+        return showMessage()
+    finally:
+        cursor.close() 
+        conn.close() 
+
+
 
 @app.route('/form/<int:user_id>', methods = ['GET'])
 def get_user_forms(user_id):
@@ -77,8 +104,9 @@ def get_user_forms(user_id):
         #     data[index+1] = form
         respone = jsonify(getDictonary(forms,200))
         return respone
-    except Exception as e:
+    except pymysql.Error as e:
         print(e)
+        return showMessage()
     finally:
         cursor.close() 
         conn.close() 
@@ -102,8 +130,9 @@ def create_user_form():
         conn.commit()
         respone = jsonify(getDictonary("Success",201))
         return respone
-    except Exception as e:
+    except pymysql.Error as e:
         print(e)
+        return showMessage()
     finally:
         cursor.close() 
         conn.close() 
@@ -119,7 +148,7 @@ def getDictonary(data,status_code):
 def showMessage(error=None):
     message = {
         'status': 404,
-        'message': 'Record not found',
+        'message':'Error',
     }
     respone = jsonify(message)
     respone.status_code = 404
